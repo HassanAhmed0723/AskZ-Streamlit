@@ -19,7 +19,7 @@ from langchain_core.prompts import PromptTemplate
 
 # Initialize OpenAI client
 # client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-client = openai.OpenAI(api_key=st.secrets.OPENAI_API_KEY)
+client = openai.OpenAI(api_key=st.secrets["OPENAI_API_KEY"])
 # pinecone_api_key = os.getenv("PINECONE_API_KEY")
 pinecone_api_key = st.secrets.pinecone.PINECONE_API_KEY
 
