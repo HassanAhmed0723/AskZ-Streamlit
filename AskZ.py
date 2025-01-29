@@ -15,11 +15,11 @@ from langchain_core.prompts import PromptTemplate
 
 
 # Load the .env file from the parent directory
-dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+#dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 
 # Initialize OpenAI client
 # client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
-client = openai.OpenAI(api_key=st.secrets.openai.OPENAI_API_KEY)
+client = openai.OpenAI(api_key=st.secrets.OPENAI_API_KEY)
 # pinecone_api_key = os.getenv("PINECONE_API_KEY")
 pinecone_api_key = st.secrets.pinecone.PINECONE_API_KEY
 
