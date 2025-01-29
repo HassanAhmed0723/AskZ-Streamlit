@@ -12,7 +12,6 @@ from pinecone import Pinecone
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
-from pinecone import init
 
 
 # Load the .env file from the parent directory
@@ -30,10 +29,6 @@ st.write("Secrets:", st.secrets)
 # Initialize embeddings
 #embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002", openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"])
-
-
-# Initialize Pinecone
-init(api_key=pinecone_api_key)
 
 # Initialize Pinecone Vector Store
 vectorstore = PineconeVectorStore(
