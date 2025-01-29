@@ -21,7 +21,7 @@ dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
 # client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 client = openai.OpenAI(api_key=st.secrets.openai.OPENAI_API_KEY)
 # pinecone_api_key = os.getenv("PINECONE_API_KEY")
-pinecone_api_key = st.secrets.openai.PINECONE_API_KEY
+pinecone_api_key = st.secrets.pinecone.PINECONE_API_KEY
 
 # Initialize embeddings
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
