@@ -24,7 +24,7 @@ client = openai.OpenAI(api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 pinecone_api_key = st.secrets["pinecone"]["PINECONE_API_KEY"]
 
 # Log the secrets
-st.write("Secrets:", st.secrets)
+#st.write("Secrets:", st.secrets)
 
 # Initialize embeddings
 #embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
@@ -147,7 +147,7 @@ def get_api_call_data(query):
     formatted_docs = format_docs(results)
     print("Retrieved Chunks: \n",formatted_docs)
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1)
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1, openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 
     # Prompt template to preprocess the user query
     answer_prompt = PromptTemplate.from_template(
