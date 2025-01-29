@@ -35,6 +35,7 @@ vectorstore = PineconeVectorStore(
     index_name='askz-api-data',
     embedding=embeddings,
     text_key="full_content",
+    pinecone_api_key = st.secrets["pinecone"]["PINECONE_API_KEY"],
 )
 
 # Create retriever
