@@ -23,8 +23,12 @@ client = openai.OpenAI(api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 # pinecone_api_key = os.getenv("PINECONE_API_KEY")
 pinecone_api_key = st.secrets.pinecone.PINECONE_API_KEY
 
+# Log the secrets
+st.write("Secrets:", st.secrets)
+
 # Initialize embeddings
-embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+#embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
+embeddings = OpenAIEmbeddings(model="text-embedding-ada-002", openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 
 # Initialize Pinecone Vector Store
 vectorstore = PineconeVectorStore(
