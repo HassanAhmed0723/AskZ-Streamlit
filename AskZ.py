@@ -12,6 +12,7 @@ from pinecone import Pinecone
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
+import re
 
 
 # Load the .env file from the parent directory
@@ -24,7 +25,6 @@ client = openai.OpenAI(api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 pinecone_api_key = st.secrets["pinecone"]["PINECONE_API_KEY"]
 
 # Initialize embeddings
-#embeddings = OpenAIEmbeddings(model="text-embedding-ada-002")
 embeddings = OpenAIEmbeddings(model="text-embedding-ada-002", openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 
 # Initialize Pinecone Vector Store
@@ -38,7 +38,7 @@ vectorstore = PineconeVectorStore(
 # Create retriever
 retriever = vectorstore.as_retriever(
     search_kwargs={
-        "k": 4 
+        "k": 8 
     }
 )
 
@@ -48,6 +48,7 @@ def format_docs(docs):
 
 def execute_query(endpoint, method, parameters = None):
     url = "https://cip.stage.z360.biz" + endpoint
+    print(f"Executing API call with URL: {url}")
     headers = {
         'Authorization': 'Bearer 1',
         'Content-Type': 'application/json'
@@ -94,6 +95,8 @@ def clean_response(response):
         response = response[7:]
     if response.endswith("```"):
         response = response[:-3]
+    # Remove inline comments (basic removal for // style comments)
+    response = re.sub(r'//.*$', '', response, flags=re.MULTILINE)
     return response
 
 def extract_json_data(api_endpoint_response):
@@ -144,19 +147,24 @@ def get_api_call_data(query):
     formatted_docs = format_docs(results)
     print("Retrieved Chunks: \n",formatted_docs)
 
-    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1, openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"])
+    llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1)
 
     # Prompt template to preprocess the user query
     answer_prompt = PromptTemplate.from_template(
             """ 
             Extract the most relevant API endpoint based on the provided user query and the API data Description.
-            For user queries where a sequence of maximum two calls is required to get the results, extract all the API endpoints, methods and parameters.            
-            Fill in the parameters provided by the user and only return the extracted Endpoints, Methods and Parameters (if explicitly provided by user) in JSON format like this:
+            For user queries where a sequence of maximum two calls is required to get the results, extract the required API endpoints, methods and parameters.
+            
+            For example: To retreive conversations of a contact you might need their id first so first get the id using the name and then get the conversations using the id. 
+            So in this case you will have two API calls, one to get the id and the other to get the conversations.
+            First you'll get contact details through "endpoint": "/contacts", "method": "GET", "parameters": {{"search": {{"type": "string","description": "Search term for filtering contacts by name, email, or phone number."}}            
+            
+            Fill in the parameters provided by the user and only return the extracted Endpoints, Methods and Parameters (if explicitly provided by user) in JSON format like this for at least 2 api calls.
 
             {{
                 "api_calls": [
                     {{
-                        "endpoint": "/api/endpoint1",
+                        "endpoint": "/endpoint1",
                         "method": "GET",
                         "parameters": {{
                             "param1": "value1",
@@ -164,7 +172,7 @@ def get_api_call_data(query):
                         }}
                     }},
                     {{
-                        "endpoint": "/api/endpoint2",
+                        "endpoint": "/endpoint2",
                         "method": "GET",
                         "parameters": {{
                             "paramA": "valueA",
@@ -183,14 +191,19 @@ def get_api_call_data(query):
     api_data_chain = answer_prompt | llm | StrOutputParser()
     api_data = api_data_chain.invoke({"query": query, "formatted_docs": formatted_docs})
 
-    print(f"API Request Data - Not Cleaned: {api_data}")
+    print(f"API Request Data 1 - Not Cleaned: {api_data}")
     # Clean and extract API call details
     api_call_details = extract_api_call_details(api_data)
     # Example output format
     print(api_call_details)
 
     # Save the first and second API calls
-    first_api_call = api_call_details[0] if len(api_call_details) > 0 else None
+    #first_api_call = api_call_details[0] if len(api_call_details) > 0 else None
+    if api_call_details and len(api_call_details) > 0:
+        first_api_call = api_call_details[0]
+    else:
+        first_api_call = None
+
     second_api_call = api_call_details[1] if len(api_call_details) > 1 else None
 
     # Check if the first API call exists
@@ -207,7 +220,7 @@ def get_api_call_data(query):
     else:
         print("No first API call details found.")
     
-    print("Second API Call:", second_api_call)
+    print("\n\nSecond API Call:", second_api_call)
 
 
     answer_prompt_2 = PromptTemplate.from_template(
@@ -216,8 +229,8 @@ def get_api_call_data(query):
         Return in JSON format like this:
             
             {{
-                "endpoint":
-                "method": 
+                "endpoint": "/endpoint",
+                "method": "GET",
                 "parameters": {{
                     "param1": "value1",
                     "param2": "value2"
@@ -243,7 +256,7 @@ def get_api_call_data(query):
         extracted_method = api_call_details_2.get("method", "")
         extracted_parameters = api_call_details_2.get("parameters", {})
         second_call_response = execute_query(extracted_endpoint, extracted_method, extracted_parameters)
-        print(f"Extracted Endpoint: {extracted_endpoint},\n Method: {extracted_method}, \n Parameters: {extracted_parameters}")
+        print(f"Extracted Endpoint 2: {extracted_endpoint},\n Method: {extracted_method}, \n Parameters: {extracted_parameters}")
         print(f"Second Call Response: {second_call_response}")
         # print(f"Extracted JSON Data: {json_data}")
     else:
