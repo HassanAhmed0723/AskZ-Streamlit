@@ -48,7 +48,7 @@ def format_docs(docs):
 
 def execute_query(endpoint, method, parameters = None):
     url = "https://cip.stage.z360.biz" + endpoint
-    print(f"Executing API call with URL: {url}")
+    #print(f"Executing API call with URL: {url}")
     headers = {
         'Authorization': 'Bearer 1',
         'Content-Type': 'application/json'
@@ -145,7 +145,7 @@ def get_api_call_data(query):
 
     # Format and return the documents
     formatted_docs = format_docs(results)
-    print("Retrieved Chunks: \n",formatted_docs)
+    #print("Retrieved Chunks: \n",formatted_docs)
 
     llm = ChatOpenAI(model="gpt-4o-mini", temperature=0.1, openai_api_key=st.secrets["openai"]["OPENAI_API_KEY"])
 
@@ -191,11 +191,11 @@ def get_api_call_data(query):
     api_data_chain = answer_prompt | llm | StrOutputParser()
     api_data = api_data_chain.invoke({"query": query, "formatted_docs": formatted_docs})
 
-    print(f"API Request Data 1 - Not Cleaned: {api_data}")
+    #print(f"API Request Data 1 - Not Cleaned: {api_data}")
     # Clean and extract API call details
     api_call_details = extract_api_call_details(api_data)
     # Example output format
-    print(api_call_details)
+    #print(api_call_details)
 
     # Save the first and second API calls
     #first_api_call = api_call_details[0] if len(api_call_details) > 0 else None
@@ -215,12 +215,12 @@ def get_api_call_data(query):
 
         # Execute the first API call
         first_call_response = execute_query(endpoint, method, parameters)
-        print("First API Response:", first_call_response)
+        #print("First API Response:", first_call_response)
         first_call_response = json.dumps(first_call_response)
     else:
         print("No first API call details found.")
     
-    print("\n\nSecond API Call:", second_api_call)
+    #print("\n\nSecond API Call:", second_api_call)
 
 
     answer_prompt_2 = PromptTemplate.from_template(
@@ -248,7 +248,7 @@ def get_api_call_data(query):
     api_data_chain_2 = answer_prompt_2 | llm | StrOutputParser()
     api_data_2 = api_data_chain_2.invoke({"query": query, "second_api_call": second_api_call, "first_call_response": first_call_response})
 
-    print(f"API Request Data - Not Cleaned: {api_data_2}")
+    #print(f"API Request Data - Not Cleaned: {api_data_2}")
     # Clean and extract API call details
     api_call_details_2 = extract_json_data(api_data_2)
     if api_call_details_2:
@@ -256,8 +256,8 @@ def get_api_call_data(query):
         extracted_method = api_call_details_2.get("method", "")
         extracted_parameters = api_call_details_2.get("parameters", {})
         second_call_response = execute_query(extracted_endpoint, extracted_method, extracted_parameters)
-        print(f"Extracted Endpoint 2: {extracted_endpoint},\n Method: {extracted_method}, \n Parameters: {extracted_parameters}")
-        print(f"Second Call Response: {second_call_response}")
+        #print(f"Extracted Endpoint 2: {extracted_endpoint},\n Method: {extracted_method}, \n Parameters: {extracted_parameters}")
+        #print(f"Second Call Response: {second_call_response}")
         # print(f"Extracted JSON Data: {json_data}")
     else:
         print("Failed to extract JSON data.")
