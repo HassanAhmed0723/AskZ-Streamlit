@@ -159,7 +159,7 @@ def get_api_call_data(query):
             So in this case you will have two API calls, one to get the id and the other to get the conversations.
             First you'll get contact details through "endpoint": "/contacts", "method": "GET", "parameters": {{"search": {{"type": "string","description": "Search term for filtering contacts by name, email, or phone number."}}            
             
-            Fill in the parameters provided by the user and only return the extracted Endpoints, Methods and Parameters (if explicitly provided by user) in JSON format like this for at least 2 api calls.
+            Fill in the parameters provided by the user and strictly only return the extracted Endpoints, Methods and Parameters (if explicitly provided by user) in JSON format like this for at least 2 api calls.
 
             {{
                 "api_calls": [
@@ -266,9 +266,27 @@ def get_api_call_data(query):
     second_call_response = json.dumps(second_call_response)
 
     api_call_response = first_call_response + "\n" + second_call_response
-
     
-    return f"{api_call_response}, \n\n Here's the data, provide only the most appropriate, relevant and user required information."
+    print("\n\nConcatenated API Call Response: \n", api_call_response)
+    
+    # Adding another Completions Chain to Reduce API Response Tokens
+    answer_prompt_3 = PromptTemplate.from_template(
+        """
+        Here's the concatenated response from the first and second API call. Keep only the most appropriate, relevant and user required information,
+        according to the user query. You must smartly decide the data to retain keeping in view the possible follow up questions that a user might ask.
+        Return only the most relevant part of the response.
+            
+            User Query: {query}
+            API Response: {api_call_response}
+
+        """
+    )
+    
+    api_data_reduce_chain = answer_prompt_3 | llm | StrOutputParser()
+    reduced_api_data = api_data_reduce_chain.invoke({"query": query, "api_call_response": api_call_response})
+    print(f"\nReduced API Data: {reduced_api_data}")
+
+    return f"{reduced_api_data}, \n\n Here's the data, provide only the most appropriate, relevant and user required information."
 
 
 # Initialize Streamlit app
@@ -339,7 +357,7 @@ if user_query:
                 func_name = action['function']['name']
                 arguments = json.loads(action['function']['arguments'])
 
-                if func_name == "get_api_call_data":
+                if func_name == "get_user_query":
                     query = arguments["query"]
                     print(f"Query: {query}")
                     api_call_data = get_api_call_data(query)
